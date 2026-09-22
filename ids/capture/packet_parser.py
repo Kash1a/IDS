@@ -244,8 +244,6 @@ def extract_http_response(payload):
     
     if "\r\n\r\n" in text:
         body = text.split("\r\n\r\n", 1)[1]
-    
-    result["transactions"][0]["request"]["body"] = body
     result["transactions"][0]["response"]["content_length"] = len(body.encode("utf-8"))
 
     return result

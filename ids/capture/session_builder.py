@@ -230,25 +230,30 @@ class SessionBuilder:
     def _update_http(self, session, packet):
 
         http = packet.get("http")
-
-        if not http:
+        
+        if not http or not http.get("is_http"):
             return
 
-        if not http.get("is_http"):
-            return 
-
-        session["http"] = {
-            key: value
-            for key, value in http.items()
-            if key != "type"
-        }
+        session["http"]["is_http"] = True
+        transactions = session["http"]["transactions"]
+        packet_transaction = http["transactions"][0]
 
         if http.get("type") == "request":
-
+            # Nếu transaction cuối vẫn còn "trống" (chưa có request thật) thì dùng lại,
+            # ngược lại tạo transaction mới cho request tiếp theo trong cùng session
+            if transactions and transactions[-1]["request"]["method"] == "" \
+            and transactions[-1]["response"]["status_code"] == 0:
+                transactions[-1]["request"] = packet_transaction["request"]
+            else:
+                transactions.append({
+                    "request": packet_transaction["request"],
+                    "response": {"status_code": 0, "content_length": 0}
+                })
             session["connection"]["request_count"] += 1
 
         elif http.get("type") == "response":
-
+            if transactions:
+                transactions[-1]["response"] = packet_transaction["response"]
             session["connection"]["response_count"] += 1
 
     # Add packet to session

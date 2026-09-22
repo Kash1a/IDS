@@ -19,7 +19,7 @@ def worker_xu_ly(capture):
             session = capture.process_packet(packet)
             #session = capture.session_builder.getsession
             if session is None:
-                break
+                continue
             # Nếu gói tin vừa rồi tạo ra hoặc cập nhật một session hợp lệ, chuyển sang cho các engine xử lý
             if session:
                 behavior_engine(session,rules)

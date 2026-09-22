@@ -19,27 +19,26 @@ def normalize_payload(payload):
     payload = re.sub(r"\s+", " ", payload)
     return payload
 
-def detect_xss(session,rules):
-    """Quét và phát hiện dấu hiệu XSS dựa trên cấu trúc JSON session."""
-    # 1. Kiểm tra cấu trúc session HTTP hợp lệ
+def detect_xss(session, rules):
     http = session.get("http")
     if not http or not http.get("is_http"):
         return
-    XSS_PATTERNS = rules.get("XSS_PATTERNS",[])
+    XSS_PATTERNS = rules.get("XSS_PATTERNS", [])
 
-
-
-    # 2. Truy cập vào mảng requests: session["http"]["transactions"]["requests"]
     transactions = http.get("transactions", [])
-    # 3. Duyệt qua từng request gửi lên
-    for transaction in transactions:
+    if not transactions:
+        return
+    transaction = transactions[-1]
 
-        uri = (transaction.get("request")).get("uri")
-        body = (transaction.get("request")).get("body")
-        payload = uri + body
-        for pattern in XSS_PATTERNS:
-            if re.search(pattern, payload, re.IGNORECASE):
-                network = session.get("network",{})
-                src_ip = network.get("src_ip","")
-                alert_detect_xss(src_ip,payload)# Phát hiện XSS
-    return # Không phát hiện XSS
+    uri = (transaction.get("request") or {}).get("uri", "") or ""
+    body = (transaction.get("request") or {}).get("body", "") or ""
+
+    payload = normalize_payload(uri + " " + body)   # <-- gọi hàm normalize đã định nghĩa
+
+    for pattern in XSS_PATTERNS:
+        if re.search(pattern, payload, re.IGNORECASE):
+            network = session.get("network", {})
+            src_ip = network.get("src_ip", "")
+            alert_detect_xss(src_ip, payload)
+            return
+    return

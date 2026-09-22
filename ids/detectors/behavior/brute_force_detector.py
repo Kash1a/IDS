@@ -6,9 +6,9 @@ def detect_brute_force(sessions,rules):
     REQUEST_RATE_THRESHOLD = rules.get("REQUEST_RATE_THRESHOLD",0)
 
 
-
     login_failed_count = 0
-    failed_logins = {}  # Lưu số lần thất bại theo từng IP nguồn
+
+    failed_logins ={} # Lưu số lần thất bại theo từng IP nguồn
 
     for session in sessions:
         timestamp = session.get("timestamp", {})
@@ -21,8 +21,8 @@ def detect_brute_force(sessions,rules):
             continue
 
         for transaction in transactions:
-            request = transaction.get("request", [])
-            response = transaction.get("response", [])
+            request = transaction.get("request", {})
+            response = transaction.get("response", {})
             method = request.get("method", "")
             uri = request.get("uri", "")
             status_code = response.get("status_code", 0)
